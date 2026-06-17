@@ -52,7 +52,7 @@ A Telegram bot for managing bookings in a recording studio, built with aiogram 3
    ```
    The bot service will wait for the database to be ready before running migrations and starting the bot.
 
-   **Troubleshooting**: If you see an error about "Multiple head revisions" in the logs, it means the database has an old migration stamp. To fix this:
+   **Troubleshooting**: If you see an error about "Multiple head revisions" or "column users.last_name does not exist" in the logs, it means the database has an old migration stamp or schema. To fix this:
    ```bash
    docker-compose down -v   # This removes the database volume and starts fresh
    docker-compose up --build
@@ -70,7 +70,7 @@ A Telegram bot for managing bookings in a recording studio, built with aiogram 3
 5. Deploy!
    Railway will run the container, which will wait for the database to be ready, run migrations, and start the bot.
 
-   **Troubleshooting**: If you see an error about "Multiple head revisions" in the logs, you may need to reset your PostgreSQL plugin in Railway (delete and re-add it) to start with a clean database.
+   **Troubleshooting**: If you see an error about "Multiple head revisions" or "column users.last_name does not exist" in the logs, you may need to reset your PostgreSQL plugin in Railway (delete and re-add it) to start with a clean database.
 
 ## Project Structure
 

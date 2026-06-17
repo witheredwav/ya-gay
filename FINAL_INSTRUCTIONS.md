@@ -22,7 +22,7 @@ All import errors, syntax errors, and migration issues have been fixed. The bot 
    ```bash
    docker-compose up --build
    ```
-   **If you see "Multiple head revisions" error:**
+   **If you see "Multiple head revisions" or "column users.last_name does not exist" error:**
    ```bash
    docker-compose down -v   # Removes database volume and starts fresh
    docker-compose up --build
@@ -38,9 +38,17 @@ All import errors, syntax errors, and migration issues have been fixed. The bot 
      - `DATABASE_URL` (add PostgreSQL plugin first, then use its connection string)
      - `ADMIN_IDS` (optional, comma-separated Telegram IDs)
 3. Deploy!
-   **If you see "Multiple head revisions" error:**
+   **If you see "Multiple head revisions" or "column users.last_name does not exist" error:**
    - Reset/delete your PostgreSQL plugin in Railway and re-add it to start with a clean database
    - Then redeploy
+
+### Option 3: Local Development without Docker
+1. Set up a PostgreSQL database and update `.env` with the correct `DATABASE_URL`
+2. Install dependencies: `pip install -r requirements.txt`
+3. Apply migrations: `alembic upgrade head`
+   **If you see "Multiple head revisions" error:**
+   - Drop your database and recreate it, then run `alembic upgrade head`
+4. Run the bot: `python -m src.bot.main`
 
 ## Verification
 After successful deployment, you should see logs indicating:
@@ -54,6 +62,6 @@ The bot will then respond to the `/start` command in Telegram.
 If you encounter any issues not covered here, please check:
 1. That your `.env` file is correctly formatted
 2. That your PostgreSQL database is accessible and running
-3. That you have followed the troubleshooting steps for "Multiple head revisions"
+3. That you have followed the troubleshooting steps for "Multiple head revisions" or missing columns
 
 Happy booking! 🎙️
