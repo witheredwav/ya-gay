@@ -111,7 +111,7 @@ def downgrade() -> None:
     op.drop_index(op.f('ix_schedules_id'), table_name='schedules')
     op.drop_table('schedules')
     op.drop_index(op.f('ix_referrals_id'), table_name='referrals')
-    op.delete_table('referrals')
+    op.drop_table('referrals')
     op.drop_index(op.f('ix_bonus_transactions_id'), table_name='bonus_transactions')
     op.drop_table('bonus_transactions')
     op.drop_index(op.f('ix_bookings_id'), table_name='bookings')
