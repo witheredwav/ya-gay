@@ -43,20 +43,36 @@ A Telegram bot for managing bookings in a recording studio, built with aiogram 3
    python -m src.bot.main
    ```
 
-### Using Docker Compose
+### Using Docker Compose (Recommended for Local Development)
 
 1. Copy `.env.example` to `.env` and fill in the values
-2. Start the services:
+2. **CRITICAL FIRST STEP**: Remove any existing Docker volumes to avoid migration conflicts:
+   ```bash
+   docker-compose down -v
+   ```
+3. Start the services:
    ```bash
    docker-compose up --build
    ```
-   The bot service will wait for the database to be ready before running migrations and starting the bot.
 
-   **Troubleshooting**: If you see an error about "Multiple head revisions" or "column users.last_name does not exist" in the logs, it means the database has an old migration stamp or schema. To fix this:
-   ```bash
-   docker-compose down -v   # This removes the database volume and starts fresh
-   docker-compose up --build
-   ```
+   **If you encounter "Multiple head revisions" error**:
+   This error means that the database volume was not removed correctly or there is a leftover container.
+   To fix:
+   1. Stop and remove all containers, networks, and volumes associated with the compose project:
+        ```bash
+        docker-compose down --volumes --remove-orphans
+        ```
+   2. Remove any orphaned volumes (if any) that are not managed by compose:
+        ```bash
+        docker volume ls -qf dangling=true | xargs -r docker volume rm
+        ```
+   3. Then start again:
+        ```bash
+        docker-compose up --build
+        ```
+
+   **If you encounter "column users.last_name does not exist" error**:
+   This error means that the database schema is out of date. This should be fixed by running the migrations, but if the migration history is corrupted, you may need to start with a fresh database as above.
 
 ### Deployment to Railway
 

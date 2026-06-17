@@ -62,6 +62,12 @@ This means your database has an old migration stamp from a previous run. To fix 
 docker-compose down -v   # This removes the database volume and starts fresh
 docker-compose up --build
 ```
+If the problem persists, try:
+```bash
+docker-compose down --volumes --remove-orphans
+docker volume ls -qf dangling=true | xargs -r docker volume rm
+docker-compose up --build
+```
 
 #### For Railway:
 You may need to reset/delete your PostgreSQL plugin and re-add it to start with a clean database.
@@ -71,6 +77,10 @@ Drop your database and recreate it, then run:
 ```bash
 alembic upgrade head
 ```
+
+### "column users.last_name does not exist" error
+This error means that the database schema is out of date (missing columns from the latest migration).
+This should be fixed by running the migrations, but if the migration history is corrupted, you may need to start with a fresh database as above.
 
 ## Next Steps
 1. Set up a PostgreSQL database (either locally or using Docker Compose)

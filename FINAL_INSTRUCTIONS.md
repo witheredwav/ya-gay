@@ -18,13 +18,17 @@ All import errors, syntax errors, and migration issues have been fixed. The bot 
    DATABASE_URL=postgresql+asyncpg://user:password@localhost/recording_studio
    ADMIN_IDS=123456789,987654321  # Optional
    ```
-2. Run:
+2. **Critical first step**: Remove any existing Docker volumes to avoid migration conflicts:
    ```bash
-   docker-compose up --build
+   docker-compose down -v
    ```
-   **If you see "Multiple head revisions" or "column users.last_name does not exist" error:**
+   If the problem persists, try:
    ```bash
-   docker-compose down -v   # Removes database volume and starts fresh
+   docker-compose down --volumes --remove-orphans
+   docker volume ls -qf dangling=true | xargs -r docker volume rm
+   ```
+3. Run:
+   ```bash
    docker-compose up --build
    ```
 
@@ -45,10 +49,9 @@ All import errors, syntax errors, and migration issues have been fixed. The bot 
 ### Option 3: Local Development without Docker
 1. Set up a PostgreSQL database and update `.env` with the correct `DATABASE_URL`
 2. Install dependencies: `pip install -r requirements.txt`
-3. Apply migrations: `alembic upgrade head`
-   **If you see "Multiple head revisions" error:**
-   - Drop your database and recreate it, then run `alembic upgrade head`
-4. Run the bot: `python -m src.bot.main`
+3. **Critical first step**: Drop and recreate your database to avoid migration conflicts
+4. Apply migrations: `alembic upgrade head`
+5. Run the bot: `python -m src.bot.main`
 
 ## Verification
 After successful deployment, you should see logs indicating:
