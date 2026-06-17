@@ -8,7 +8,8 @@ All import errors, syntax errors, and migration issues have been fixed. The bot 
 2. Corrected migration files and environment configuration
 3. Updated Docker and Docker-Compose to handle database health checks and run migrations on startup
 4. Changed the Dockerfile to migrate to a specific revision (0001_initial) instead of 'head' to avoid "Multiple head revisions" error
-5. Added troubleshooting steps for common issues
+5. Overrode the DATABASE_URL in the docker-compose.yml for the bot service to point to the db service (so that the user only needs to set BOT_TOKEN and ADMIN_IDS in the .env file when using Docker Compose)
+6. Added troubleshooting steps for common issues
 
 ## How to Deploy
 
@@ -16,8 +17,8 @@ All import errors, syntax errors, and migration issues have been fixed. The bot 
 1. Copy `.env.example` to `.env` and fill in your values:
    ```env
    BOT_TOKEN=your_actual_bot_token_here
-   DATABASE_URL=postgresql+asyncpg://user:password@localhost/recording_studio
    ADMIN_IDS=123456789,987654321  # Optional
+   # Note: DATABASE_URL in .env is ignored when using Docker Compose (it is overridden to point to the db service)
    ```
 2. **Critical first step**: Remove any existing Docker volumes to avoid migration conflicts:
    ```bash

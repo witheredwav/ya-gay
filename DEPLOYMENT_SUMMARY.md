@@ -6,7 +6,8 @@
 1. Prepare environment:
    ```bash
    cp .env.example .env
-   # Edit .env with your BOT_TOKEN, DATABASE_URL, and ADMIN_IDS
+   # Edit .env with your BOT_TOKEN and ADMIN_IDS
+   # Note: DATABASE_URL in .env is ignored when using Docker Compose (it is overridden to point to the db service)
    ```
 2. **Critical first step**: Remove any old database volume to avoid migration conflicts:
    ```bash
@@ -70,3 +71,4 @@ The bot will then respond to the `/start` command in Telegram.
 - After successful initial deployment, subsequent `docker-compose up` will preserve your data
 - All bot features (booking, bonuses, referrals, schedules, etc.) are implemented with placeholder logic ready for your customization
 - The Dockerfile has been updated to migrate to a specific revision (0001_initial) to avoid the "Multiple head revisions" error
+- When using Docker Compose, the DATABASE_URL for the bot service is overridden to point to the db service (postgresql+asyncpg://user:password@db:5432/recording_studio), so the user only needs to set BOT_TOKEN and ADMIN_IDS in the .env file

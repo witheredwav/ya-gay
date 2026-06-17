@@ -23,12 +23,39 @@ A Telegram bot for managing bookings in a recording studio, built with aiogram 3
 
 ## Setup
 
-### Local Development
+### Local Development (with Docker Compose - Recommended)
 
 1. Clone the repository
 2. Copy `.env.example` to `.env` and fill in the required values:
    - `BOT_TOKEN`: Your Telegram bot token
-   - `DATABASE_URL`: PostgreSQL connection string (e.g., `postgresql+asyncpg://user:password@localhost/db_name`)
+   - `ADMIN_IDS`: Comma-separated list of Telegram IDs for admins (optional)
+   - Note: The `DATABASE_URL` in the `.env` file is ignored when using Docker Compose (it is overridden by the compose file to point to the db service). However, you must still have a `.env` file with the `BOT_TOKEN` and `ADMIN_IDS` (you can leave `DATABASE_URL` as is or change it to match the db service credentials if you wish).
+3. **CRITICAL FIRST STEP**: Remove any existing Docker volumes to avoid migration conflicts:
+   ```bash
+   docker-compose down -v
+   ```
+   If the problem persists, try:
+   ```bash
+   docker-compose down --volumes --remove-orphans
+   docker volume ls -qf dangling=true | xargs -r docker volume rm
+   ```
+4. Start the services:
+   ```bash
+   docker-compose up --build
+   ```
+   The bot service will wait for the database to be ready before running migrations and starting the bot.
+
+   **Note**: The Dockerfile has been updated to run migrations to a specific revision (0001_initial) to avoid the "Multiple head revisions" error. If you still encounter this error, it means there are leftover migration stamps in the database, and you need to start with a fresh database as described above.
+
+   **If you encounter "column users.last_name does not exist" error**:
+   This error means that the database schema is out of date. This should be fixed by running the migrations, but if the migration history is corrupted, you may need to start with a fresh database as above.
+
+### Local Development (without Docker)
+
+1. Set up a PostgreSQL database and update `.env` with the correct `DATABASE_URL` (e.g., `postgresql+asyncpg://user:password@localhost/recording_studio`).
+2. Copy `.env.example` to `.env` and fill in the required values:
+   - `BOT_TOKEN`: Your Telegram bot token
+   - `DATABASE_URL`: Your PostgreSQL connection string
    - `ADMIN_IDS`: Comma-separated list of Telegram IDs for admins (optional)
 3. Install dependencies:
    ```bash
@@ -43,28 +70,6 @@ A Telegram bot for managing bookings in a recording studio, built with aiogram 3
    python -m src.bot.main
    ```
 
-### Using Docker Compose (Recommended for Local Development)
-
-1. Copy `.env.example` to `.env` and fill in the values
-2. **CRITICAL FIRST STEP**: Remove any existing Docker volumes to avoid migration conflicts:
-   ```bash
-   docker-compose down -v
-   ```
-   If the problem persists, try:
-   ```bash
-   docker-compose down --volumes --remove-orphans
-   docker volume ls -qf dangling=true | xargs -r docker volume rm
-   ```
-3. Start the services:
-   ```bash
-   docker-compose up --build
-   ```
-
-   **Note**: The Dockerfile has been updated to run migrations to a specific revision (0001_initial) to avoid the "Multiple head revisions" error. If you still encounter this error, it means there are leftover migration stamps in the database, and you need to start with a fresh database as described above.
-
-   **If you encounter "column users.last_name does not exist" error**:
-   This error means that the database schema is out of date. This should be fixed by running the migrations, but if the migration history is corrupted, you may need to start with a fresh database as above.
-
 ### Deployment to Railway
 
 1. Push the repository to GitHub
@@ -72,7 +77,7 @@ A Telegram bot for managing bookings in a recording studio, built with aiogram 3
 3. Railway will automatically detect the Dockerfile and build the image
 4. Set the environment variables in the Railway dashboard:
    - `BOT_TOKEN`
-   - `DATABASE_URL` (you can add a PostgreSQL plugin)
+   - `DATABASE_URL` (you can add a PostgreSQL plugin and use its connection string)
    - `ADMIN_IDS`
 5. Deploy!
    Railway will run the container, which will wait for the database to be ready, run migrations (to revision 0001_initial), and start the bot.
