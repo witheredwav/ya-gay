@@ -7,7 +7,8 @@ All import errors, syntax errors, and migration issues have been fixed. The bot 
 1. Fixed all Python import and syntax errors in the codebase
 2. Corrected migration files and environment configuration
 3. Updated Docker and Docker-Compose to handle database health checks and run migrations on startup
-4. Added troubleshooting steps for common issues
+4. Changed the Dockerfile to migrate to a specific revision (0001_initial) instead of 'head' to avoid "Multiple head revisions" error
+5. Added troubleshooting steps for common issues
 
 ## How to Deploy
 
@@ -56,7 +57,7 @@ All import errors, syntax errors, and migration issues have been fixed. The bot 
 ## Verification
 After successful deployment, you should see logs indicating:
 - Database connection established
-- Migrations applied
+- Migrations applied (to revision 0001_initial)
 - Bot started and polling for updates
 
 The bot will then respond to the `/start` command in Telegram.

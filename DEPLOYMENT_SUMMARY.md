@@ -11,6 +11,9 @@
 2. **Critical first step**: Remove any old database volume to avoid migration conflicts:
    ```bash
    docker-compose down -v
+   # If problem persists, try:
+   docker-compose down --volumes --remove-orphans
+   docker volume ls -qf dangling=true | xargs -r docker volume rm
    ```
 3. Start the services:
    ```bash
@@ -66,3 +69,4 @@ The bot will then respond to the `/start` command in Telegram.
 - The `docker-compose down -v` command is **only needed for the first run** or when you encounter migration conflicts
 - After successful initial deployment, subsequent `docker-compose up` will preserve your data
 - All bot features (booking, bonuses, referrals, schedules, etc.) are implemented with placeholder logic ready for your customization
+- The Dockerfile has been updated to migrate to a specific revision (0001_initial) to avoid the "Multiple head revisions" error

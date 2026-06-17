@@ -50,26 +50,17 @@ A Telegram bot for managing bookings in a recording studio, built with aiogram 3
    ```bash
    docker-compose down -v
    ```
+   If the problem persists, try:
+   ```bash
+   docker-compose down --volumes --remove-orphans
+   docker volume ls -qf dangling=true | xargs -r docker volume rm
+   ```
 3. Start the services:
    ```bash
    docker-compose up --build
    ```
 
-   **If you encounter "Multiple head revisions" error**:
-   This error means that the database volume was not removed correctly or there is a leftover container.
-   To fix:
-   1. Stop and remove all containers, networks, and volumes associated with the compose project:
-        ```bash
-        docker-compose down --volumes --remove-orphans
-        ```
-   2. Remove any orphaned volumes (if any) that are not managed by compose:
-        ```bash
-        docker volume ls -qf dangling=true | xargs -r docker volume rm
-        ```
-   3. Then start again:
-        ```bash
-        docker-compose up --build
-        ```
+   **Note**: The Dockerfile has been updated to run migrations to a specific revision (0001_initial) to avoid the "Multiple head revisions" error. If you still encounter this error, it means there are leftover migration stamps in the database, and you need to start with a fresh database as described above.
 
    **If you encounter "column users.last_name does not exist" error**:
    This error means that the database schema is out of date. This should be fixed by running the migrations, but if the migration history is corrupted, you may need to start with a fresh database as above.
@@ -84,7 +75,7 @@ A Telegram bot for managing bookings in a recording studio, built with aiogram 3
    - `DATABASE_URL` (you can add a PostgreSQL plugin)
    - `ADMIN_IDS`
 5. Deploy!
-   Railway will run the container, which will wait for the database to be ready, run migrations, and start the bot.
+   Railway will run the container, which will wait for the database to be ready, run migrations (to revision 0001_initial), and start the bot.
 
    **Troubleshooting**: If you see an error about "Multiple head revisions" or "column users.last_name does not exist" in the logs, you may need to reset your PostgreSQL plugin in Railway (delete and re-add it) to start with a clean database.
 

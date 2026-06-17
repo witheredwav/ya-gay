@@ -24,5 +24,5 @@ COPY alembic.ini .
 RUN adduser --disabled-password --gecos '' appuser
 USER appuser
 
-# Run migrations and then start the bot
-CMD ["sh", "-c", "python -m alembic upgrade head && python -m src.bot.main"]
+# Run migrations to the specific revision and then start the bot
+CMD ["sh", "-c", "python -m alembic upgrade 0001_initial && python -m src.bot.main"]
