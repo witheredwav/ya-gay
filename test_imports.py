@@ -11,9 +11,10 @@ os.environ.setdefault("ADMIN_IDS", "123456789,987654321")
 
 try:
     from src.bot.handlers import client, engineer, admin
-    print("SUCCESS: All handlers imported successfully")
+    from src.bot.middlewares import RoleMiddleware
+    print("SUCCESS: All imports successful")
 except Exception as e:
-    print(f"ERROR: Failed to import handlers: {e}")
+    print(f"ERROR: Failed to import: {e}")
     import traceback
     traceback.print_exc()
     sys.exit(1)
