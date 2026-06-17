@@ -34,19 +34,16 @@ target_metadata = Base.metadata
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
 
-def get_url():
-    """Get database URL from environment variable."""
+def get_sync_url():
+    """Get database URL for synchronous connection (used by Alembic migrations)."""
     url = os.getenv("DATABASE_URL")
     if not url:
         raise ValueError("DATABASE_URL is not set in the environment. Please check your .env file or environment variables.")
-    # Ensure we use asyncpg driver for PostgreSQL
-    if url.startswith("postgresql://"):
-        # Convert to postgresql+asyncpg://
-        return url.replace("postgresql://", "postgresql+asyncpg://", 1)
+    # Convert asyncpg URL to synchronous PostgreSQL URL for Alembic
+    if url.startswith("postgresql+asyncpg://"):
+        url = url.replace("postgresql+asyncpg://", "postgresql://", 1)
     elif url.startswith("postgres://"):
-        # Also handle postgres://
-        return url.replace("postgres://", "postgresql+asyncpg://", 1)
-    # If already has a driver or is another DB, return as is
+        url = url.replace("postgres://", "postgresql://", 1)
     return url
 
 def run_migrations_offline():
@@ -61,7 +58,7 @@ def run_migrations_offline():
     the script output.
 
     """
-    url = get_url()
+    url = get_sync_url()
     context.configure(
         url=url,
         target_metadata=target_metadata,
@@ -81,7 +78,7 @@ def run_migrations_online():
 
     """
     configuration = config.get_section(config.config_ini_section)
-    configuration["sqlalchemy.url"] = get_url()
+    configuration["sqlalchemy.url"] = get_sync_url()
     connectable = engine_from_config(
         configuration,
         prefix="sqlalchemy.",

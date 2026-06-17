@@ -1,7 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 from src.bot.config import config
-from urllib.parse import urlparse, urlunparse
 
 # Ensure we use asyncpg driver for PostgreSQL
 def _ensure_asyncpg_url(url: str) -> str:
