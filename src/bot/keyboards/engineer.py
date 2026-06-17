@@ -23,7 +23,7 @@ def get_request_details_keyboard(booking_id):
 def get_schedule_keyboard():
     builder = InlineKeyboardBuilder()
     builder.button(text="Установить график работы", callback_data="set_schedule")
-    builder.button text="Добавить выходной", callback_data="add_day_off"
+    builder.button(text="Добавить выходной", callback_data="add_day_off")
     builder.button(text="Посмотреть текущий график", callback_data="view_schedule")
     builder.adjust(1)
     return builder.as_markup()

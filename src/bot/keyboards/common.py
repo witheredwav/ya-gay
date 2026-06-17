@@ -1,5 +1,5 @@
 from aiogram.utils.keyboard import InlineKeyboardBuilder, ReplyKeyboardBuilder
-from aiogram.types import InlineKeyboardButton, ReplyKeyboardKeyboardButton
+from aiogram.types import InlineKeyboardButton, KeyboardButton
 
 def get_confirm_keyboard():
     builder = InlineKeyboardBuilder()

@@ -11,6 +11,7 @@ from src.bot.database import async_session
 from src.models.user import User
 from src.models.booking import Booking, BookingStatus
 from datetime import datetime
+from sqlalchemy import select
 
 router = Router()
 
