@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: recording_studio
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  bot:
+    build: .
+    env_file:
+      - .env
+    depends_on:
+      - db
+    # Uncomment the following line if you want to run migrations on startup
+    # command: >
+    #   sh -c "alembic upgrade head &&
+    #          python -m src.bot.main"
+    command: python -m src.bot.main
+
+volumes:
+  postgres_data:
