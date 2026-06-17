@@ -24,8 +24,5 @@ COPY alembic.ini .
 RUN adduser --disabled-password --gecos '' appuser
 USER appuser
 
-# Expose port (if needed for webhook, but we're using polling)
-# EXPOSE 8000
-
-# Run the bot
-CMD ["python", "-m", "src.bot.main"]
+# Run migrations and then start the bot
+CMD ["sh", "-c", "python -m alembic upgrade head && python -m src.bot.main"]

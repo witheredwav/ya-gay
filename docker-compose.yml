@@ -18,11 +18,7 @@ services:
       - .env
     depends_on:
       - db
-    # Uncomment the following line if you want to run migrations on startup
-    # command: >
-    #   sh -c "alembic upgrade head &&
-    #          python -m src.bot.main"
-    command: python -m src.bot.main
+    # The command is now defined in the Dockerfile
 
 volumes:
   postgres_data:
