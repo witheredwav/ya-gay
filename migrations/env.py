@@ -4,6 +4,10 @@ from sqlalchemy import pool
 from alembic import context
 import sys
 import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Add the src directory to the path so we can import our models
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
@@ -30,6 +34,20 @@ target_metadata = Base.metadata
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
 
+def get_url():
+    """Get database URL from environment variable."""
+    url = os.getenv("DATABASE_URL")
+    if not url:
+        raise ValueError("DATABASE_URL is not set in the environment. Please check your .env file or environment variables.")
+    # Ensure we use asyncpg driver for PostgreSQL
+    if url.startswith("postgresql://"):
+        # Convert to postgresql+asyncpg://
+        return url.replace("postgresql://", "postgresql+asyncpg://", 1)
+    elif url.startswith("postgres://"):
+        # Also handle postgres://
+        return url.replace("postgres://", "postgresql+asyncpg://", 1)
+    # If already has a driver or is another DB, return as is
+    return url
 
 def run_migrations_offline():
     """Run migrations in 'offline' mode.
@@ -43,7 +61,7 @@ def run_migrations_offline():
     the script output.
 
     """
-    url = config.get_main_option("sqlalchemy.url")
+    url = get_url()
     context.configure(
         url=url,
         target_metadata=target_metadata,
@@ -62,8 +80,10 @@ def run_migrations_online():
     and associate a DBAPI with the connection.
 
     """
+    configuration = config.get_section(config.config_ini_section)
+    configuration["sqlalchemy.url"] = get_url()
     connectable = engine_from_config(
-        config.get_section(config.config_ini_section),
+        configuration,
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )

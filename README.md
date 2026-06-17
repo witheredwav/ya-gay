@@ -50,6 +50,7 @@ A Telegram bot for managing bookings in a recording studio, built with aiogram 3
    ```bash
    docker-compose up --build
    ```
+   The bot service will wait for the database to be ready before running migrations and starting the bot.
 
 ### Deployment to Railway
 
@@ -61,6 +62,7 @@ A Telegram bot for managing bookings in a recording studio, built with aiogram 3
    - `DATABASE_URL` (you can add a PostgreSQL plugin)
    - `ADMIN_IDS`
 5. Deploy!
+   Railway will run the container, which will wait for the database to be ready, run migrations, and start the bot.
 
 ## Project Structure
 
