@@ -1,6 +1,7 @@
 from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.context import FSMContext
+from aiogram.utils.keyboard import InlineKeyboardBuilder
 from src.bot.states import AdminStates
 from src.bot.keyboards.common import get_main_admin_keyboard, get_confirm_keyboard, get_back_keyboard
 from src.bot.keyboards.admin import (
@@ -10,11 +11,21 @@ from src.bot.keyboards.admin import (
 )
 from src.bot.database import async_session
 from src.models.user import User
-from src.models.booking import Booking
+from src.models.booking import Booking, BookingStatus
 from src.models.bonus import BonusTransaction
 from src.models.referral import Referral
 from datetime import datetime, timedelta
-from sqlalchemy import select
+from sqlalchemy import select, func
+
+# Inline keyboard for statistics menu
+def get_statistics_keyboard():
+    builder = InlineKeyboardBuilder()
+    builder.button(text="Заявки (Pending)", callback_data="stat_requests")
+    builder.button(text="Подтвержденные записи", callback_data="stat_confirmed")
+    builder.button(text="Отмены", callback_data="stat_cancellations")
+    builder.button(text="Выручка", callback_data="stat_revenue")
+    builder.adjust(1)
+    return builder.as_markup()
 
 router = Router()
 
@@ -289,7 +300,6 @@ async def process_stat_cancellations(callback: CallbackQuery, state: FSMContext)
 async def process_stat_revenue(callback: CallbackQuery, state: FSMContext):
     async with async_session() as session:
         # Sum total_price of completed bookings
-        from sqlalchemy import func
         result = await session.execute(
             select(func.sum(Booking.total_price)).where(Booking.status == BookingStatus.COMPLETED)
         )
@@ -300,3 +310,155 @@ async def process_stat_revenue(callback: CallbackQuery, state: FSMContext):
         reply_markup=get_statistics_keyboard()
     )
     await callback.answer()
+
+# New handlers for admin menu buttons
+@router.message(F.text == "Статистика")
+async def btn_statistics(message: Message, state: FSMContext):
+    await message.answer(
+        "Выберите тип статистики:",
+        reply_markup=get_statistics_keyboard()
+    )
+
+@router.message(F.text == "Все записи")
+async def btn_all_bookings(message: Message, state: FSMContext):
+    async with async_session() as session:
+        bookings = await session.execute(
+            select(Booking).order_by(Booking.start_time.desc()).limit(20)
+        )
+        bookings = bookings.scalars().all()
+        if not bookings:
+            text = "Записей нет."
+        else:
+            text = "Все записи (последние 20):\n"
+            for b in bookings:
+                client = await session.get(User, b.client_id)
+                engineer = await session.get(User, b.engineer_id)
+                text += (
+                    f"• {b.start_time.strftime('%d.%m.%Y %H:%M')} - "
+                    f"Клиент: {client.first_name if client else '?'}, "
+                    f"Инженер: {engineer.first_name if engineer else '?'}\n"
+                    f"  Длительность: {b.duration_hours}ч, Статус: {b.status.value}, "
+                    f"Стоимость: {b.total_price} руб.\n"
+                )
+    await message.answer(text)
+
+@router.message(F.text == "Ночные записи")
+async def btn_night_bookings(message: Message, state: FSMContext):
+    async with async_session() as session:
+        bookings = await session.execute(
+            select(Booking)
+            .where(Booking.is_night_booking == True)
+            .order_by(Booking.start_time.desc())
+            .limit(20)
+        )
+        bookings = bookings.scalars().all()
+        if not bookings:
+            text = "Ночных записей нет."
+        else:
+            text = "Ночные записи (последние 20):\n"
+            for b in bookings:
+                client = await session.get(User, b.client_id)
+                engineer = await session.get(User, b.engineer_id)
+                text += (
+                    f"• {b.start_time.strftime('%d.%m.%Y %H:%M')} - "
+                    f"Клиент: {client.first_name if client else '?'}, "
+                    f"Инженер: {engineer.first_name if engineer else '?'}\n"
+                    f"  Длительность: {b.duration_hours}ч, Статус: {b.status.value}, "
+                    f"Стоимость: {b.total_price} руб.\n"
+                )
+    await message.answer(text)
+
+@router.message(F.text == "Пользователи")
+async def btn_all_users(message: Message, state: FSMContext):
+    async with async_session() as session:
+        users = await session.execute(
+            select(User).order_by(User.registration_date.desc())
+        )
+        users = users.scalars().all()
+        if not users:
+            text = "Пользователей нет."
+        else:
+            text = "Пользователи:\n"
+            for u in users:
+                text += (
+                    f"• ID: {u.id}, TG ID: {u.telegram_id}, "
+                    f"Имя: {u.first_name or ''} {u.last_name or ''}, "
+                    f"Роль: {u.role}, Активен: {u.is_active}\n"
+                )
+    await message.answer(text)
+
+@router.message(F.text == "Звукорежиссеры")
+async def btn_engineers(message: Message, state: FSMContext):
+    async with async_session() as session:
+        engineers = await session.execute(
+            select(User).where(User.role == "engineer", User.is_active == True)
+        )
+        engineers = engineers.scalars().all()
+        if not engineers:
+            text = "Звукорежиссеров нет."
+        else:
+            text = "Звукорежиссеры:\n"
+            for e in engineers:
+                text += (
+                    f"• ID: {e.id}, TG ID: {e.telegram_id}, "
+                    f"Имя: {e.first_name or ''} {e.last_name or ''}, "
+                    f"Ставка: {e.hourly_rate or 'не указана'} руб/ч\n"
+                )
+    await message.answer(text)
+
+@router.message(F.text == "Администраторы")
+async def btn_admins(message: Message, state: FSMContext):
+    async with async_session() as session:
+        admins = await session.execute(
+            select(User).where(User.role == "admin", User.is_active == True)
+        )
+        admins = admins.scalars().all()
+        if not admins:
+            text = "Администраторов нет."
+        else:
+            text = "Администраторы:\n"
+            for a in admins:
+                text += (
+                    f"• ID: {a.id}, TG ID: {a.telegram_id}, "
+                    f"Имя: {a.first_name or ''} {a.last_name or ''}\n"
+                )
+    await message.answer(text)
+
+@router.message(F.text == "Бонусная система")
+async def btn_bonus_system(message: Message, state: FSMContext):
+    async with async_session() as session:
+        # Total bonus amount earned/spent
+        result = await session.execute(
+            select(func.sum(BonusTransaction.amount))
+        )
+        total_bonus = result.scalar_one() or 0
+        # Count of transactions
+        cnt_result = await session.execute(
+            select(func.count()).select_from(BonusTransaction)
+        )
+        cnt = cnt_result.scalar_one()
+        text = (
+            f"Бонусная система:\n"
+            f"Всего начислено бонусов: {total_bonus} баллов\n"
+            f"Количество транзакций: {cnt}\n"
+        )
+    await message.answer(text)
+
+@router.message(F.text == "Наша команда")
+async def btn_our_team(message: Message, state: FSMContext):
+    await message.answer(
+        "Наша команда звукорежиссеров:\n"
+        "• Иванов Иван (ведущий инженер)\n"
+        "• Петр Петров (запись и микс)\n"
+        "• Сидорова Анна (мастеринг)\n"
+        "Вы можете выбрать любого из них при записи.",
+        reply_markup=get_main_admin_keyboard()
+    )
+
+@router.message(F.text == "Настройки")
+async def btn_settings(message: Message, state: FSMContext):
+    await message.answer(
+        "Настройки пока не реализованы.\n"
+        "Скоро здесь будут возможности изменить рабочее время, стоимость часа и т.д.",
+        reply_markup=get_main_admin_keyboard()
+    )

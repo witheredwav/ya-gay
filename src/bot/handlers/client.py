@@ -335,6 +335,10 @@ async def process_duration(callback: CallbackQuery, state: FSMContext):
 async def back_to_main(callback: CallbackQuery, state: FSMContext):
     await state.clear()
     await callback.message.edit_text(
+        "Вы вернулись в главное меню",
+        reply_markup=None
+    )
+    await callback.message.answer(
         "Выберите действие:",
         reply_markup=get_main_client_keyboard()
     )
@@ -483,6 +487,10 @@ async def process_confirm(callback: CallbackQuery, state: FSMContext):
     await state.clear()
     await callback.message.edit_text(
         "Запись создана! Ожидайте подтверждения.",
+        reply_markup=None
+    )
+    await callback.message.answer(
+        "Выберите действие:",
         reply_markup=get_main_client_keyboard()
     )
     await callback.answer()
@@ -505,6 +513,10 @@ async def process_cancel(callback: CallbackQuery, state: FSMContext):
     await state.clear()
     await callback.message.edit_text(
         "Запись отменена.",
+        reply_markup=None
+    )
+    await callback.message.answer(
+        "Выберите действие:",
         reply_markup=get_main_client_keyboard()
     )
     await callback.answer()

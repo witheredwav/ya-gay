@@ -86,6 +86,10 @@ async def process_confirm_request(callback: CallbackQuery, state: FSMContext):
         await session.commit()
     await callback.message.edit_text(
         f"Заявка #{booking.id} подтверждена.",
+        reply_markup=None
+    )
+    await callback.message.answer(
+        "Выберите действие:",
         reply_markup=get_main_engineer_keyboard()
     )
     # Notify client
@@ -105,6 +109,10 @@ async def process_reject_request(callback: CallbackQuery, state: FSMContext):
         await session.commit()
     await callback.message.edit_text(
         f"Заявка #{booking.id} отклонена.",
+        reply_markup=None
+    )
+    await callback.message.answer(
+        "Выберите действие:",
         reply_markup=get_main_engineer_keyboard()
     )
     # Notify client with reason (we'd need to ask for reason)

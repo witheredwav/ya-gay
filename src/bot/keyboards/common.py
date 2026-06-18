@@ -16,13 +16,13 @@ def get_back_keyboard():
 
 def get_main_client_keyboard():
     builder = ReplyKeyboardBuilder()
-    builder.button(text="Записаться")
-    builder.button(text="Ночная запись")
-    builder.button(text="Наша команда")
-    builder.button(text="Мои записи")
-    builder.button(text="Бонусы и рефералы")
-    builder.button(text="Контакты студии")
-    builder.button(text="Помощь")
+    builder.button(text="📝 Записаться")
+    builder.button(text="🌙 Ночная запись")
+    builder.button(text="👥 Наша команда")
+    builder.button(text="📋 Мои записи")
+    builder.button(text="🎁 Бонусы и рефералы")
+    builder.button(text="📞 Контакты студии")
+    builder.button(text="❓ Помощь")
     builder.adjust(2)
     return builder.as_markup(resize_keyboard=True)
 

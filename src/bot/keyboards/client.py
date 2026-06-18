@@ -3,18 +3,34 @@ from aiogram.types import InlineKeyboardButton
 from datetime import datetime, timedelta
 import calendar
 
+# Russian month names
+month_names = [
+    "", "январь", "февраль", "март", "апрель", "май", "июнь",
+    "июль", "август", "сентябрь", "октябрь", "ноябрь", "декабрь"
+]
+
 def get_month_keyboard():
     builder = InlineKeyboardBuilder()
     now = datetime.now()
-    for i in range(12):
-        month = (now.month - 1 + i) % 12 + 1
-        year = now.year + ((now.month - 1 + i) // 12)
-        builder.button(
-            text=datetime(year, month, 1).strftime("%B %Y"),
-            callback_data=f"month:{month}"
-        )
+    # Current month
+    month = now.month
+    year = now.year
+    builder.button(
+        text=f"{month_names[month].capitalize()} {year}",
+        callback_data=f"month:{month}"
+    )
+    # Next month
+    if month == 12:
+        month = 1
+        year += 1
+    else:
+        month += 1
+    builder.button(
+        text=f"{month_names[month].capitalize()} {year}",
+        callback_data=f"month:{month}"
+    )
     builder.button(text="🔙 Назад", callback_data="back_to_main")
-    builder.adjust(3, 1)
+    builder.adjust(2, 1)
     return builder.as_markup()
 
 def get_date_keyboard(month: int):
@@ -23,10 +39,15 @@ def get_date_keyboard(month: int):
     year = now.year
     if month < now.month:
         year = now.year + 1
-    elif month == now.month and now.day > 25:  # Simplified: if late in month, show next month
+    elif month == now.month and now.day > 25:  # If late in month, show next month
         year = now.year + 1
     _, num_days = calendar.monthrange(year, month)
-    for day in range(1, num_days + 1):
+    # Determine start day: if current month, start from today; else from 1
+    if month == now.month and year == now.year:
+        start_day = now.day
+    else:
+        start_day = 1
+    for day in range(start_day, num_days + 1):
         builder.button(
             text=str(day),
             callback_data=f"date:{day}"
@@ -46,9 +67,28 @@ def get_engineer_keyboard():
 
 def get_time_keyboard():
     builder = InlineKeyboardBuilder()
-    times = ["11:00", "11:30", "12:00", "12:30", "13:00", "13:30", "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00", "17:30", "18:00", "18:30", "19:00", "19:30", "20:00", "20:30", "21:00", "21:30", "22:00"]
-    for time in times:
-        builder.button(text=time, callback_data=f"time:{time}")
+    now = datetime.now()
+    # Work hours: 11:00 to 22:00, slot step 30 minutes
+    # Round up current time to next half hour
+    if now.minute < 30:
+        rounded = now.replace(minute=30, second=0, microsecond=0)
+    else:
+        rounded = now.replace(minute=0, second=0, microsecond=0) + timedelta(hours=1)
+    # If rounded time is after workday end, no slots
+    work_start = now.replace(hour=11, minute=0, second=0, microsecond=0)
+    work_end = now.replace(hour=22, minute=0, second=0, microsecond=0)
+    if rounded > work_end:
+        # No available slots today
+        builder.button(text="Нет свободных слотов", callback_data="none")
+    else:
+        # Generate time slots from max(work_start, rounded) to work_end step 30 min
+        current = max(work_start, rounded)
+        while current <= work_end:
+            builder.button(
+                text=current.strftime("%H:%M"),
+                callback_data=f"time:{current.strftime('%H:%M')}"
+            )
+            current += timedelta(minutes=30)
     builder.button(text="🔙 Назад", callback_data="back_to_engineer")
     builder.adjust(4, 1)
     return builder.as_markup()
