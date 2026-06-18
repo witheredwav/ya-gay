@@ -80,8 +80,8 @@ async def process_client(callback: CallbackQuery, state: FSMContext):
         f"Телефон: {client.phone_number or 'не указан'}\n"
         f"Дата регистрации: {client.registration_date.strftime('%d.%m.%Y')}\n"
         f"Всего записей: {len(bookings)}\n"
-        f"Завершенных записей: {len([b for b in bookings if b.status == \"completed\"])}\n"
-        f"Отмен: {len([b for b in bookings if b.status == \"cancelled_client\"])}\n"
+        f"Завершенных записей: {len([b for b in bookings if b.status == 'completed'])}\n"
+        f"Отмен: {len([b for b in bookings if b.status == 'cancelled_client'])}\n"
         f"Рефералов: {len(referrals)}\n"
         f"Бонусных баллов: {sum(b.amount for b in bonuses if b.amount > 0)}\n"
     )
