@@ -15,6 +15,7 @@ class User(Base):
     registration_date = Column(DateTime(timezone=True), server_default=func.now())
     is_active = Column(Boolean, default=True)
     role = Column(String(20), nullable=False)  # 'client', 'engineer', 'admin'
+    is_admin = Column(Boolean, default=False, nullable=False)
     # For engineers
     hourly_rate = Column(Integer, nullable=True)  # in currency units
     description = Column(Text, nullable=True)
