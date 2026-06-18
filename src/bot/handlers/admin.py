@@ -41,6 +41,7 @@ async def cmd_start(message: Message, state: FSMContext):
 
 @router.message(F.text == "Клиенты")
 async def btn_clients(message: Message, state: FSMContext):
+    await state.clear()
     await state.set_state(AdminStates.viewing_clients)
     async with async_session() as session:
         clients = await session.execute(
@@ -93,6 +94,7 @@ async def process_client(callback: CallbackQuery, state: FSMContext):
 
 @router.message(F.text == "Добавить звукорежиссера")
 async def btn_add_engineer(message: Message, state: FSMContext):
+    await state.clear()
     await state.set_state(AdminStates.adding_engineer)
     await message.answer(
         "Введите Telegram ID пользователя, которого хотите назначить звукорежиссером:",
@@ -144,6 +146,7 @@ async def process_add_engineer(message: Message, state: FSMContext):
 # Similar handler for adding admin
 @router.message(F.text == "Добавить администратора")
 async def btn_add_admin(message: Message, state: FSMContext):
+    await state.clear()
     await state.set_state(AdminStates.adding_admin)
     await message.answer(
         "Введите Telegram ID пользователя, которого хотите назначить администратором:",
@@ -257,6 +260,7 @@ async def process_client_referrals(callback: CallbackQuery, state: FSMContext):
 
 @router.callback_query(F.data == "back_to_clients")
 async def process_back_to_clients(callback: CallbackQuery, state: FSMContext):
+    await state.clear()
     await state.set_state(AdminStates.viewing_clients)
     async with async_session() as session:
         clients = await session.execute(
@@ -272,6 +276,7 @@ async def process_back_to_clients(callback: CallbackQuery, state: FSMContext):
 # Statistics handlers (placeholders)
 @router.callback_query(F.data == "stat_requests")
 async def process_stat_requests(callback: CallbackQuery, state: FSMContext):
+    await state.clear()
     async with async_session() as session:
         pending = await session.execute(
             select(Booking).where(Booking.status == "pending")
@@ -284,6 +289,7 @@ async def process_stat_requests(callback: CallbackQuery, state: FSMContext):
 
 @router.callback_query(F.data == "stat_confirmed")
 async def process_stat_confirmed(callback: CallbackQuery, state: FSMContext):
+    await state.clear()
     async with async_session() as session:
         confirmed = await session.execute(
             select(Booking).where(Booking.status == "confirmed")
@@ -295,6 +301,7 @@ async def process_stat_confirmed(callback: CallbackQuery, state: FSMContext):
 
 @router.callback_query(F.data == "stat_cancellations")
 async def process_stat_cancellations(callback: CallbackQuery, state: FSMContext):
+    await state.clear()
     async with async_session() as session:
         cancelled = await session.execute(
             select(Booking).where(Booking.status.in_(["cancelled_client", "rejected"]))
@@ -306,6 +313,7 @@ async def process_stat_cancellations(callback: CallbackQuery, state: FSMContext)
 
 @router.callback_query(F.data == "stat_revenue")
 async def process_stat_revenue(callback: CallbackQuery, state: FSMContext):
+    await state.clear()
     async with async_session() as session:
         result = await session.execute(
             select(func.sum(Booking.total_price)).where(Booking.status == "completed")
@@ -318,6 +326,7 @@ async def process_stat_revenue(callback: CallbackQuery, state: FSMContext):
 # New handlers for admin menu buttons
 @router.message(F.text == "Статистика")
 async def btn_statistics(message: Message, state: FSMContext):
+    await state.clear()
     await message.answer(
         "Выберите тип статистики:",
         reply_markup=get_statistics_keyboard()
@@ -325,6 +334,7 @@ async def btn_statistics(message: Message, state: FSMContext):
 
 @router.message(F.text == "Все записи")
 async def btn_all_bookings(message: Message, state: FSMContext):
+    await state.clear()
     async with async_session() as session:
         bookings = await session.execute(
             select(Booking).order_by(Booking.start_time.desc()).limit(20)
@@ -348,6 +358,7 @@ async def btn_all_bookings(message: Message, state: FSMContext):
 
 @router.message(F.text == "Ночные записи")
 async def btn_night_bookings(message: Message, state: FSMContext):
+    await state.clear()
     async with async_session() as session:
         bookings = await session.execute(
             select(Booking)
@@ -374,6 +385,7 @@ async def btn_night_bookings(message: Message, state: FSMContext):
 
 @router.message(F.text == "Пользователи")
 async def btn_all_users(message: Message, state: FSMContext):
+    await state.clear()
     async with async_session() as session:
         users = await session.execute(
             select(User).order_by(User.registration_date.desc())
@@ -393,6 +405,7 @@ async def btn_all_users(message: Message, state: FSMContext):
 
 @router.message(F.text == "Звукорежиссеры")
 async def btn_engineers(message: Message, state: FSMContext):
+    await state.clear()
     async with async_session() as session:
         engineers = await session.execute(
             select(User).where(User.role == "engineer", User.is_active == True)
@@ -423,6 +436,7 @@ async def btn_engineers(message: Message, state: FSMContext):
 
 @router.message(F.text == "Администраторы")
 async def btn_admins(message: Message, state: FSMContext):
+    await state.clear()
     async with async_session() as session:
         admins = await session.execute(
             select(User).where(User.role == "admin", User.is_active == True)
@@ -441,6 +455,7 @@ async def btn_admins(message: Message, state: FSMContext):
 
 @router.message(F.text == "Бонусная система")
 async def btn_bonus_system(message: Message, state: FSMContext):
+    await state.clear()
     async with async_session() as session:
         # Total bonus amount earned/spent
         result = await session.execute(
@@ -461,6 +476,7 @@ async def btn_bonus_system(message: Message, state: FSMContext):
 
 @router.message(F.text == "Наша команда")
 async def btn_our_team(message: Message, state: FSMContext):
+    await state.clear()
     await message.answer(
         "Наша команда звукорежиссеров:\n"
         "• Иванов Иван (ведущий ingeniero)\n"
@@ -472,6 +488,7 @@ async def btn_our_team(message: Message, state: FSMContext):
 
 @router.message(F.text == "Настройки")
 async def btn_settings(message: Message, state: FSMContext):
+    await state.clear()
     # Get studio settings (singleton)
     async with async_session() as session:
         result = await session.execute(select(StudioSettings).limit(1))
@@ -505,6 +522,7 @@ async def btn_settings(message: Message, state: FSMContext):
 # Engineer detail viewing and editing
 @router.callback_query(F.data.startswith("engineer_view:"))
 async def cb_engineer_view(callback: CallbackQuery, state: FSMContext):
+    await state.clear()
     engineer_id = int(callback.data.split(":")[1])
     async with async_session() as session:
         engineer = await session.get(User, engineer_id)
@@ -544,7 +562,7 @@ async def cb_engineer_view(callback: CallbackQuery, state: FSMContext):
         f"Всего записей: {bookings_count.scalar()}\n"
         f"Завершенных: {completed_count.scalar()}\n"
         f"Отменено: {cancelled_count.scalar()}\n"
-        f"Заработано: {total_earnings.scalar() or 0} руб.\n"
+        f"Заработок: {total_earnings.scalar() or 0} руб.\n"
     )
     builder = InlineKeyboardBuilder()
     builder.button(text="Изменить ставку", callback_data=f"engineer_edit_rate:{engineer_id}")
@@ -560,6 +578,7 @@ async def cb_engineer_view(callback: CallbackQuery, state: FSMContext):
 
 @router.callback_query(F.data == "engineers_list")
 async def cb_engineers_list(callback: CallbackQuery, state: FSMContext):
+    await state.clear()
     # Go back to the engineer list
     await btn_engineers(callback.message, state)
     await callback.answer()
@@ -567,6 +586,7 @@ async def cb_engineers_list(callback: CallbackQuery, state: FSMContext):
 # Engineer editing handlers
 @router.callback_query(F.data.startswith("engineer_edit_rate:"))
 async def cb_engineer_edit_rate(callback: CallbackQuery, state: FSMContext):
+    await state.clear()
     engineer_id = int(callback.data.split(":")[1])
     await state.update_data(engineer_id=engineer_id)
     await state.set_state(AdminStates.editing_engineer_hourly_rate)
@@ -601,6 +621,7 @@ async def process_engineer_rate(message: Message, state: FSMContext):
 
 @router.callback_query(F.data.startswith("engineer_edit_desc:"))
 async def cb_engineer_edit_desc(callback: CallbackQuery, state: FSMContext):
+    await state.clear()
     engineer_id = int(callback.data.split(":")[1])
     await state.update_data(engineer_id=engineer_id)
     await state.set_state(AdminStates.editing_engineer_description)
@@ -631,6 +652,7 @@ async def process_engineer_description(message: Message, state: FSMContext):
 
 @router.callback_query(F.data.startswith("engineer_edit_photo:"))
 async def cb_engineer_edit_photo(callback: CallbackQuery, state: FSMContext):
+    await state.clear()
     engineer_id = int(callback.data.split(":")[1])
     await state.update_data(engineer_id=engineer_id)
     await state.set_state(AdminStates.editing_engineer_photo)
@@ -664,6 +686,7 @@ async def process_engineer_photo(message: Message, state: FSMContext):
 # Cancel any editing
 @router.message(F.text == "❌ Отмена")
 async def cmd_cancel(message: Message, state: FSMContext):
+    await state.clear()
     current_state = await state.get_state()
     if current_state is None:
         await message.answer("Нечего отменять.")
@@ -677,6 +700,7 @@ async def cmd_cancel(message: Message, state: FSMContext):
 # Settings editing handlers (from previous version)
 @router.callback_query(F.data == "settings_edit_phone")
 async def cb_settings_edit_phone(callback: CallbackQuery, state: FSMContext):
+    await state.clear()
     await state.set_state(AdminStates.editing_studio_phone)
     await callback.message.edit_text(
         "Введите новый телефон студии:",
@@ -703,6 +727,7 @@ async def process_settings_phone(message: Message, state: FSMContext):
 
 @router.callback_query(F.data == "settings_edit_email")
 async def cb_settings_edit_email(callback: CallbackQuery, state: FSMContext):
+    await state.clear()
     await state.set_state(AdminStates.editing_studio_email)
     await callback.message.edit_text(
         "Введите новый email студии:",
@@ -729,6 +754,7 @@ async def process_settings_email(message: Message, state: FSMContext):
 
 @router.callback_query(F.data == "settings_edit_address")
 async def cb_settings_edit_address(callback: CallbackQuery, state: FSMContext):
+    await state.clear()
     await state.set_state(AdminStates.editing_studio_address)
     await callback.message.edit_text(
         "Введите новый адрес студии:",
@@ -755,6 +781,7 @@ async def process_settings_address(message: Message, state: FSMContext):
 
 @router.callback_query(F.data == "settings_edit_work_hours")
 async def cb_settings_edit_work_hours(callback: CallbackQuery, state: FSMContext):
+    await state.clear()
     # Placeholder
     await callback.message.edit_text(
         "Редактирование рабочего времени пока не реализовано. Используйте файл настроек или обратитесь к разработчику.",
