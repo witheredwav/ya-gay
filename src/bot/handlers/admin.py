@@ -3,7 +3,7 @@ from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.context import FSMContext
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from src.bot.states import AdminStates
-from src.bot.keyboards.common import get_main_admin_keyboard, get_confirm_keyboard, get_back_keyboard
+from src.bot.keyboards.common import get_main_admin_keyboard, get_cancel_keyboard
 from src.bot.keyboards.admin import (
     get_clients_keyboard,
     get_client_details_keyboard,
@@ -100,11 +100,11 @@ async def btn_add_engineer(message: Message, state: FSMContext):
 
 @router.message(AdminStates.adding_engineer)
 async def process_add_engineer(message: Message, state: FSMContext):
-    try:
-        telegram_id = int(message.text)
-    except ValueError:
-        await message.answer("Telegram ID должен быть числом. Попробуйте снова.")
+    telegram_id_str = (message.text or "").strip()
+    if not telegram_id_str.isdigit():
+        await message.answer("Telegram ID должен быть числом без пробелов и других символов. Попробуйте снова.")
         return
+    telegram_id = int(telegram_id_str)
     async with async_session() as session:
         # Check if user exists
         result = await session.execute(
@@ -120,17 +120,25 @@ async def process_add_engineer(message: Message, state: FSMContext):
                 is_admin=False
             )
             session.add(user)
+            added = True
         else:
             user.role = "engineer"
             user.is_active = True
             user.is_admin = False
+            added = False
         await session.commit()
         await session.refresh(user)
     await state.clear()
-    await message.answer(
-        f"Пользователь с Telegram ID {telegram_id} теперь является звукорежиссером.",
-        reply_markup=get_main_admin_keyboard()
-    )
+    if added:
+        await message.answer(
+            f"Пользователь с Telegram ID {telegram_id} теперь является звукорежиссером.",
+            reply_markup=get_main_admin_keyboard()
+        )
+    else:
+        await message.answer(
+            f"Пользователь с Telegram ID {telegram_id} уже существовал и теперь назначен звукорежиссером.",
+            reply_markup=get_main_admin_keyboard()
+        )
 
 # Similar handler for adding admin
 @router.message(F.text == "Добавить администратора")
@@ -143,12 +151,13 @@ async def btn_add_admin(message: Message, state: FSMContext):
 
 @router.message(AdminStates.adding_admin)
 async def process_add_admin(message: Message, state: FSMContext):
-    try:
-        telegram_id = int(message.text)
-    except ValueError:
-        await message.answer("Telegram ID должен быть числом. Попробуйте снова.")
+    telegram_id_str = (message.text or "").strip()
+    if not telegram_id_str.isdigit():
+        await message.answer("Telegram ID должен быть числом без пробелов и других символов. Попробуйте снова.")
         return
+    telegram_id = int(telegram_id_str)
     async with async_session() as session:
+        # Check if user exists
         result = await session.execute(
             select(User).where(User.telegram_id == telegram_id)
         )
@@ -161,17 +170,25 @@ async def process_add_admin(message: Message, state: FSMContext):
                 is_admin=True
             )
             session.add(user)
+            added = True
         else:
             user.role = "admin"
             user.is_active = True
             user.is_admin = True
+            added = False
         await session.commit()
         await session.refresh(user)
     await state.clear()
-    await message.answer(
-        f"Пользователь с Telegram ID {telegram_id} теперь является администратором.",
-        reply_markup=get_main_admin_keyboard()
-    )
+    if added:
+        await message.answer(
+            f"Пользователь с Telegram ID {telegram_id} теперь является администратором.",
+            reply_markup=get_main_admin_keyboard()
+        )
+    else:
+        await message.answer(
+            f"Пользователь с Telegram ID {telegram_id} уже существовал и теперь назначен администратором.",
+            reply_markup=get_main_admin_keyboard()
+        )
 
 @router.callback_query(F.data.startswith("client_history:"))
 async def process_client_history(callback: CallbackQuery, state: FSMContext):
@@ -255,17 +272,13 @@ async def process_back_to_clients(callback: CallbackQuery, state: FSMContext):
 @router.callback_query(F.data == "stat_requests")
 async def process_stat_requests(callback: CallbackQuery, state: FSMContext):
     async with async_session() as session:
-        # Count pending bookings
         pending = await session.execute(
             select(Booking).where(Booking.status == BookingStatus.PENDING)
         )
         pending_cnt = len(pending.scalars().all())
-        # Count new requests? We'll treat pending as new requests
         text = f"Количество новых заявок (Pending): {pending_cnt}"
-    await callback.message.edit_text(
-        text,
-        reply_markup=get_statistics_keyboard()
-    )
+    # Send new message to avoid any edit issues
+    await callback.message.answer(text)
     await callback.answer()
 
 @router.callback_query(F.data == "stat_confirmed")
@@ -276,10 +289,7 @@ async def process_stat_confirmed(callback: CallbackQuery, state: FSMContext):
         )
         confirmed_cnt = len(confirmed.scalars().all())
         text = f"Подтвержденные записи: {confirmed_cnt}"
-    await callback.message.edit_text(
-        text,
-        reply_markup=get_statistics_keyboard()
-    )
+    await callback.message.answer(text)
     await callback.answer()
 
 @router.callback_query(F.data == "stat_cancellations")
@@ -290,25 +300,18 @@ async def process_stat_cancellations(callback: CallbackQuery, state: FSMContext)
         )
         cancelled_cnt = len(cancelled.scalars().all())
         text = f"Отмены: {cancelled_cnt}"
-    await callback.message.edit_text(
-        text,
-        reply_markup=get_statistics_keyboard()
-    )
+    await callback.message.answer(text)
     await callback.answer()
 
 @router.callback_query(F.data == "stat_revenue")
 async def process_stat_revenue(callback: CallbackQuery, state: FSMContext):
     async with async_session() as session:
-        # Sum total_price of completed bookings
         result = await session.execute(
             select(func.sum(Booking.total_price)).where(Booking.status == BookingStatus.COMPLETED)
         )
         total = result.scalar_one() or 0
         text = f"Выручка (завершенные записи): {total} руб."
-    await callback.message.edit_text(
-        text,
-        reply_markup=get_statistics_keyboard()
-    )
+    await callback.message.answer(text)
     await callback.answer()
 
 # New handlers for admin menu buttons
