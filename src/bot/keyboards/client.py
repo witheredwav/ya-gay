@@ -13,7 +13,8 @@ def get_month_keyboard():
             text=datetime(year, month, 1).strftime("%B %Y"),
             callback_data=f"month:{month}"
         )
-    builder.adjust(3)
+    builder.button(text="🔙 Назад", callback_data="back_to_main")
+    builder.adjust(3, 1)
     return builder.as_markup()
 
 def get_date_keyboard(month: int):
@@ -30,7 +31,8 @@ def get_date_keyboard(month: int):
             text=str(day),
             callback_data=f"date:{day}"
         )
-    builder.adjust(7)
+    builder.button(text="🔙 Назад", callback_data="back_to_month")
+    builder.adjust(7, 1)
     return builder.as_markup()
 
 def get_engineer_keyboard():
@@ -38,7 +40,8 @@ def get_engineer_keyboard():
     # In reality, fetch from DB
     builder.button(text="Инженер 1", callback_data="engineer:1")
     builder.button(text="Инженер 2", callback_data="engineer:2")
-    builder.adjust(2)
+    builder.button(text="🔙 Назад", callback_data="back_to_date")
+    builder.adjust(2, 1)
     return builder.as_markup()
 
 def get_time_keyboard():
@@ -46,7 +49,8 @@ def get_time_keyboard():
     times = ["11:00", "11:30", "12:00", "12:30", "13:00", "13:30", "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00", "17:30", "18:00", "18:30", "19:00", "19:30", "20:00", "20:30", "21:00", "21:30", "22:00"]
     for time in times:
         builder.button(text=time, callback_data=f"time:{time}")
-    builder.adjust(4)
+    builder.button(text="🔙 Назад", callback_data="back_to_engineer")
+    builder.adjust(4, 1)
     return builder.as_markup()
 
 def get_duration_keyboard():
@@ -54,5 +58,6 @@ def get_duration_keyboard():
     durations = [1, 2, 3, 4, 5, 6]
     for dur in durations:
         builder.button(text=f"{dur} час(а)", callback_data=f"duration:{dur}")
-    builder.adjust(3)
+    builder.button(text="🔙 Назад", callback_data="back_to_time")
+    builder.adjust(3, 1)
     return builder.as_markup()

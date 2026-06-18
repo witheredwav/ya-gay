@@ -6,7 +6,8 @@ from src.bot.keyboards.common import (
     get_main_client_keyboard,
     get_confirm_keyboard,
     get_back_keyboard,
-    get_cancel_keyboard
+    get_cancel_keyboard,
+    get_main_admin_keyboard
 )
 from src.bot.keyboards.client import (
     get_month_keyboard,
@@ -22,6 +23,7 @@ from src.models.schedule import Schedule
 from src.models.day_off import DayOff
 from datetime import datetime, timedelta
 import calendar
+from src.bot.config import Config
 from sqlalchemy import select
 
 router = Router()
@@ -54,6 +56,17 @@ async def cmd_start(message: Message, state: FSMContext):
         "Добро пожаловать в студию звукозаписи!\n"
         "Выберите действие:",
         reply_markup=get_main_client_keyboard()
+    )
+
+@router.message(F.text == "/admin")
+async def cmd_admin(message: Message, state: FSMContext):
+    from src.bot.config import Config
+    if message.from_user.id not in Config.ADMIN_IDS:
+        await message.answer("У вас нет доступа к админ-панели.")
+        return
+    await message.answer(
+        "Админ-панель:",
+        reply_markup=get_main_admin_keyboard()
     )
 
 @router.message(F.text == "Записаться")
@@ -140,6 +153,67 @@ async def process_duration(callback: CallbackQuery, state: FSMContext):
         "Введите ваше имя:",
         reply_markup=get_cancel_keyboard()
     )
+
+# Back handlers
+@router.callback_query(F.data == "back_to_main")
+async def back_to_main(callback: CallbackQuery, state: FSMContext):
+    await state.clear()
+    await callback.message.edit_text(
+        "Выберите действие:",
+        reply_markup=get_main_client_keyboard()
+    )
+    await callback.answer()
+
+@router.callback_query(F.data == "back_to_month")
+async def back_to_month(callback: CallbackQuery, state: FSMContext):
+    await state.set_state(BookingStates.choosing_month)
+    await callback.message.edit_text(
+        "Выберите месяц:",
+        reply_markup=get_month_keyboard()
+    )
+    await callback.answer()
+
+@router.callback_query(F.data == "back_to_date")
+async def back_to_date(callback: CallbackQuery, state: FSMContext):
+    data = await state.get_data()
+    month = data.get("month")
+    if month is None:
+        month = datetime.now().month
+    await state.set_state(BookingStates.choosing_date)
+    await callback.message.edit_text(
+        "Выберите дату:",
+        reply_markup=get_date_keyboard(month)
+    )
+    await callback.answer()
+
+@router.callback_query(F.data == "back_to_engineer")
+async def back_to_engineer(callback: CallbackQuery, state: FSMContext):
+    data = await state.get_data()
+    year = data.get("year", datetime.now().year)
+    month = data.get("month", datetime.now().month)
+    day = data.get("day", datetime.now().day)
+    await state.set_state(BookingStates.choosing_engineer)
+    await callback.message.edit_text(
+        "Выберите звукорежиссера:",
+        reply_markup=get_engineer_keyboard()
+    )
+    await callback.answer()
+
+@router.callback_query(F.data == "back_to_time")
+async def back_to_time(callback: CallbackQuery, state: FSMContext):
+    data = await state.get_data()
+    engineer_id = data.get("engineer_id")
+    year = data.get("year", datetime.now().year)
+    month = data.get("month", datetime.now().month)
+    day = data.get("day", datetime.now().day)
+    date = datetime(year, month, day).date()
+    # In real implementation, we'd compute free slots; for now just show time keyboard
+    await state.set_state(BookingStates.choosing_time)
+    await callback.message.edit_text(
+        "Выберите время:",
+        reply_markup=get_time_keyboard()
+    )
+    await callback.answer()
 
 # Name input handler
 @router.message(BookingStates.entering_name)
@@ -249,6 +323,7 @@ async def process_cancel(callback: CallbackQuery, state: FSMContext):
 # Contact keyboard for phone input
 def get_contact_keyboard():
     from aiogram.types import KeyboardButton, ReplyKeyboardMarkup
+    from aiogram.utils.keyboard import ReplyKeyboardBuilder
     builder = ReplyKeyboardBuilder()
     builder.button(text="Отправить номер", request_contact=True)
     builder.adjust(1)
