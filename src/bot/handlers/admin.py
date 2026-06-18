@@ -274,7 +274,7 @@ async def process_back_to_clients(callback: CallbackQuery, state: FSMContext):
 async def process_stat_requests(callback: CallbackQuery, state: FSMContext):
     async with async_session() as session:
         pending = await session.execute(
-            select(Booking).where(Booking.status == BookingStatus.PENDING)
+            select(Booking).where(Booking.status == "pending")
         )
         pending_cnt = len(pending.scalars().all())
         text = f"Количество новых заявок (Pending): {pending_cnt}"
@@ -286,7 +286,7 @@ async def process_stat_requests(callback: CallbackQuery, state: FSMContext):
 async def process_stat_confirmed(callback: CallbackQuery, state: FSMContext):
     async with async_session() as session:
         confirmed = await session.execute(
-            select(Booking).where(Booking.status == BookingStatus.CONFIRMED)
+            select(Booking).where(Booking.status == "confirmed")
         )
         confirmed_cnt = len(confirmed.scalars().all())
         text = f"Подтвержденные записи: {confirmed_cnt}"
@@ -297,7 +297,7 @@ async def process_stat_confirmed(callback: CallbackQuery, state: FSMContext):
 async def process_stat_cancellations(callback: CallbackQuery, state: FSMContext):
     async with async_session() as session:
         cancelled = await session.execute(
-            select(Booking).where(Booking.status.in_([BookingStatus.CANCELLED_CLIENT, BookingStatus.CANCELLED_ENGINEER]))
+            select(Booking).where(Booking.status.in_(["cancelled_client", "rejected"]))
         )
         cancelled_cnt = len(cancelled.scalars().all())
         text = f"Отмены: {cancelled_cnt}"
@@ -308,7 +308,7 @@ async def process_stat_cancellations(callback: CallbackQuery, state: FSMContext)
 async def process_stat_revenue(callback: CallbackQuery, state: FSMContext):
     async with async_session() as session:
         result = await session.execute(
-            select(func.sum(Booking.total_price)).where(Booking.status == BookingStatus.COMPLETED)
+            select(func.sum(Booking.total_price)).where(Booking.status == "completed")
         )
         total = result.scalar_one() or 0
         text = f"Выручка (завершенные записи): {total} руб."
@@ -518,19 +518,19 @@ async def cb_engineer_view(callback: CallbackQuery, state: FSMContext):
         completed_count = await session.execute(
             select(func.count()).select_from(Booking).where(
                 Booking.engineer_id == engineer_id,
-                Booking.status == BookingStatus.COMPLETED
+                Booking.status == "completed"
             )
         )
         cancelled_count = await session.execute(
             select(func.count()).select_from(Booking).where(
                 Booking.engineer_id == engineer_id,
-                Booking.status.in_([BookingStatus.CANCELLED_CLIENT, BookingStatus.CANCELLED_ENGINEER])
+                Booking.status.in_(["cancelled_client", "rejected"])
             )
         )
         total_earnings = await session.execute(
             select(func.sum(Booking.total_price)).where(
                 Booking.engineer_id == engineer_id,
-                Booking.status == BookingStatus.COMPLETED
+                Booking.status == "completed"
             )
         )
     text = (

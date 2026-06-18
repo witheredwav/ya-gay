@@ -35,7 +35,7 @@ async def btn_new_requests(message: Message, state: FSMContext):
         bookings = await session.execute(
             select(Booking).where(
                 Booking.engineer_id == engineer.id,
-                Booking.status == BookingStatus.PENDING
+                Booking.status == "pending"
             ).order_by(Booking.start_time)
         )
         bookings = bookings.scalars().all()
@@ -82,7 +82,7 @@ async def process_confirm_request(callback: CallbackQuery, state: FSMContext):
         if not booking:
             await callback.answer("Заявка не найдена.")
             return
-        booking.status = BookingStatus.CONFIRMED
+        booking.status = "confirmed"
         await session.commit()
     await callback.message.edit_text(
         f"Заявка #{booking.id} подтверждена.",
@@ -105,7 +105,7 @@ async def process_reject_request(callback: CallbackQuery, state: FSMContext):
         if not booking:
             await callback.answer("Заявка не найдена.")
             return
-        booking.status = BookingStatus.REJECTED
+        booking.status = "rejected"
         await session.commit()
     await callback.message.edit_text(
         f"Заявка #{booking.id} отклонена.",

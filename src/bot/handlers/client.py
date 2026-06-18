@@ -96,9 +96,9 @@ async def get_free_slots(engineer_id, date):
                 Booking.engineer_id == engineer_id,
                 func.date(Booking.start_time) == date,
                 Booking.status.in_([
-                    BookingStatus.PENDING,
-                    BookingStatus.CONFIRMED,
-                    BookingStatus.COMPLETED
+                    "pending",
+                    "confirmed",
+                    "completed"
                 ])
             )
         )
@@ -512,7 +512,7 @@ async def process_confirm(callback: CallbackQuery, state: FSMContext):
                 minute=int(data["time"].split(":")[1])
             ),
             duration_hours=data["duration"],
-            status=BookingStatus.PENDING,  # All new bookings start as PENDING; later engineer/admin can confirm
+            status="pending",  # All new bookings start as PENDING; later engineer/admin can confirm
             is_night_booking=data.get("is_night_booking", False),
             total_price=total_price
         )
@@ -549,8 +549,7 @@ async def process_edit(callback: CallbackQuery, state: FSMContext):
 async def process_cancel(callback: CallbackQuery, state: FSMContext):
     await state.clear()
     await callback.message.edit_text(
-        "Запись отменена.",
-        reply_markup=None
+        "Запись отменена."
     )
     await callback.message.answer(
         "Выберите действие:",
