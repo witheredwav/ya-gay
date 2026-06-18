@@ -282,9 +282,19 @@ async def process_engineer(callback: CallbackQuery, state: FSMContext):
     day = data["day"]
     date = datetime(year, month, day).date()
     free_slots = await get_free_slots(engineer_id, date)
+    # Apply earliest booking time restriction (now + 2 hours) if date is today
+    now = datetime.now()
+    if date == now.date():
+        earliest = now + timedelta(hours=2)
+        # round up to next 30 minutes
+        if earliest.minute < 30:
+            earliest = earliest.replace(minute=30, second=0, microsecond=0)
+        else:
+            earliest = earliest.replace(minute=0, second=0, microsecond=0) + timedelta(hours=1)
+        free_slots = [slot for slot in free_slots if datetime.combine(date, slot) >= earliest]
     if not free_slots:
         await callback.message.edit_text(
-            "На выбранную дату у этого инженера нет свободных слотов. Выберите другую дату или инженера.",
+            "На выбранную дату у этого инженера нет свободных слотов (учитывая минимальное время доступа 2 часа). Выберите другую дату или инженера.",
             reply_markup=get_date_keyboard(month)
         )
         await state.set_state(BookingStates.choosing_date)
@@ -387,11 +397,38 @@ async def back_to_time(callback: CallbackQuery, state: FSMContext):
     month = data.get("month", datetime.now().month)
     day = data.get("day", datetime.now().day)
     date = datetime(year, month, day).date()
-    # In real implementation, we'd compute free slots; for now just show time keyboard
-    await state.set_state(BookingStates.choosing_time)
+    free_slots = await get_free_slots(engineer_id, date)
+    # Apply earliest booking time restriction (now + 2 hours) if date is today
+    now = datetime.now()
+    if date == now.date():
+        earliest = now + timedelta(hours=2)
+        # round up to next 30 minutes
+        if earliest.minute < 30:
+            earliest = earliest.replace(minute=30, second=0, microsecond=0)
+        else:
+            earliest = earliest.replace(minute=0, second=0, microsecond=0) + timedelta(hours=1)
+        free_slots = [slot for slot in free_slots if datetime.combine(date, slot) >= earliest]
+    if not free_slots:
+        await callback.message.edit_text(
+            "На выбранную дату у этого инженера нет свободных слотов (учитывая минимальное время доступа 2 часа).",
+            reply_markup=None
+        )
+        await callback.message.answer(
+            "Выберите дату:",
+            reply_markup=get_date_keyboard(month)
+        )
+        await state.set_state(BookingStates.choosing_date)
+        await callback.answer()
+        return
+    # Build keyboard with free slots
+    builder = InlineKeyboardBuilder()
+    for slot in free_slots:
+        builder.button(text=slot.strftime("%H:%M"), callback_data=f"time:{slot.strftime('%H:%M')}")
+    builder.button(text="🔙 Назад", callback_data="back_to_engineer")
+    builder.adjust(4, 1)
     await callback.message.edit_text(
         "Выберите время:",
-        reply_markup=get_time_keyboard()
+        reply_markup=builder.as_markup()
     )
     await callback.answer()
 

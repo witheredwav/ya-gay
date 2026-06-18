@@ -30,7 +30,14 @@ class AdminStates(StatesGroup):
     adding_admin = State()
     viewing_clients = State()
     viewing_client_details = State()
-    # ... more as needed
+    # Studio settings editing
+    editing_studio_phone = State()
+    editing_studio_email = State()
+    editing_studio_address = State()
+    # Engineer details editing
+    editing_engineer_hourly_rate = State()
+    editing_engineer_description = State()
+    editing_engineer_photo = State()
 
 class BonusStates(StatesGroup):
     viewing_balance = State()
